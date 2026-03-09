@@ -2,8 +2,15 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>家庭財務儀表板 - 專業顧問系統</title>
+    
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="財務儀表板">
+    <meta name="mobile-web-app-capable" content="yes">
+    
+    <link rel="manifest" href="manifest.json">
     
     <link rel="icon" type="image/png" href="app-icon.png">
     <link rel="apple-touch-icon" href="app-icon.png">
@@ -11,49 +18,65 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
+    
     <style>
-        body { font-family: 'Noto Sans TC', sans-serif; }
-        .glass { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
-        .bg-gradient-main { background: linear-gradient(135deg, #0f172a 0%, #1e40af 100%); }
-        .card-shadow { box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05); }
-        .checkbox-custom:checked { background-color: #2563eb; border-color: #2563eb; }
-        
-        /* 品牌 Logo 質感增強 */
-        .logo-glow { 
-            box-shadow: 0 0 15px rgba(255, 215, 0, 0.2); 
-            border: 1px solid rgba(255, 255, 255, 0.1); 
-            transition: transform 0.3s ease;
+        :root {
+            --safe-top: env(safe-area-inset-top);
         }
-        .logo-glow:hover { transform: scale(1.05); }
+        body { 
+            font-family: 'Noto Sans TC', sans-serif; 
+            overscroll-behavior-y: contain; /* 防止手機下拉重整的彈跳感 */
+        }
+        .glass { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(12px); }
+        .bg-gradient-main { background: linear-gradient(135deg, #0f172a 0%, #1e40af 100%); }
+        .card-shadow { box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.1); }
+        
+        /* 針對行動端安全區域優化導覽列 */
+        nav { padding-top: calc(1.5rem + var(--safe-top)) !important; }
+
+        .logo-glow { 
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.3); 
+            border: 1px solid rgba(255, 255, 255, 0.1); 
+            transition: all 0.3s ease;
+        }
+        
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+
+        .advice-item { animation: slideIn 0.4s ease-out forwards; }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-900 antialiased min-h-screen">
 
-    <nav class="bg-gradient-main text-white py-6 px-4 shadow-xl">
+    <nav class="bg-gradient-main text-white py-6 px-4 shadow-2xl sticky top-0 z-50">
         <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
             <div class="flex items-center gap-4">
-                <div class="w-12 h-12 rounded-2xl overflow-hidden logo-glow bg-[#0f172a] shrink-0">
+                <div class="w-12 h-12 rounded-2xl overflow-hidden logo-glow bg-[#0f172a] shrink-0 border-2 border-blue-400/30">
                     <img src="app-icon.png" alt="Logo" class="w-full h-full object-cover">
                 </div>
                 <div>
-                    <h1 class="text-xl font-black tracking-tight leading-tight">家庭財務儀表板</h1>
+                    <h1 class="text-xl font-black tracking-tight leading-tight uppercase">家庭財務儀表板</h1>
                     <p class="text-blue-300 font-bold text-[10px] uppercase tracking-[0.2em] opacity-80">Premium Financial Guard</p>
                 </div>
             </div>
             <div class="flex items-center gap-6">
                 <div class="text-right">
                     <p class="text-[10px] text-blue-200 uppercase font-bold tracking-widest">目前財務健康分</p>
-                    <div id="totalScore" class="text-4xl font-black">--</div>
+                    <div id="totalScore" class="text-4xl font-black tabular-nums">--</div>
                 </div>
-                <div id="rankBadge" class="px-4 py-2 rounded-full bg-white/10 border border-white/20 text-xs font-bold">載入中...</div>
+                <div id="rankBadge" class="px-4 py-2 rounded-full bg-white/10 border border-white/20 text-xs font-bold shadow-lg transition-all duration-500">載入中...</div>
             </div>
         </div>
     </nav>
 
     <main class="max-w-7xl mx-auto px-4 py-8 grid grid-cols-1 lg:grid-cols-12 gap-8">
         <div class="lg:col-span-4 space-y-6">
-            <div class="glass p-6 rounded-3xl card-shadow border border-white">
-                <h2 class="text-lg font-bold mb-6 flex items-center gap-2 border-b pb-4 text-slate-700">
+            <div class="glass p-6 rounded-[2.5rem] card-shadow border border-white/50">
+                <h2 class="text-lg font-bold mb-6 flex items-center gap-2 border-b border-slate-100 pb-4 text-slate-700">
                     <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                     財務參數設定
                 </h2>
@@ -61,116 +84,122 @@
                 <div class="space-y-5">
                     <div class="grid grid-cols-2 gap-4">
                         <div class="space-y-1">
-                            <label class="text-[11px] font-bold text-slate-400">每月總收入</label>
-                            <input type="number" id="income" oninput="handleUpdate()" class="w-full bg-slate-50 p-2.5 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-blue-500 font-bold text-sm">
+                            <label class="text-[11px] font-bold text-slate-400 ml-1">每月總收入</label>
+                            <input type="number" id="income" oninput="handleUpdate()" class="w-full bg-slate-50/50 p-3 rounded-2xl border border-slate-200 outline-none focus:ring-2 focus:ring-blue-500 font-bold text-sm transition-all">
                         </div>
                         <div class="space-y-1">
-                            <label class="text-[11px] font-bold text-slate-400">每月總支出</label>
-                            <input type="number" id="expenses" oninput="handleUpdate()" class="w-full bg-slate-50 p-2.5 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-blue-500 font-bold text-sm">
+                            <label class="text-[11px] font-bold text-slate-400 ml-1">每月總支出</label>
+                            <input type="number" id="expenses" oninput="handleUpdate()" class="w-full bg-slate-50/50 p-3 rounded-2xl border border-slate-200 outline-none focus:ring-2 focus:ring-blue-500 font-bold text-sm transition-all">
                         </div>
                     </div>
 
                     <div class="space-y-1">
-                        <label class="text-[11px] font-bold text-slate-400">可動用現金 (預備金)</label>
-                        <input type="number" id="cash" oninput="handleUpdate()" class="w-full bg-slate-50 p-2.5 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-blue-500 font-bold text-sm">
+                        <label class="text-[11px] font-bold text-slate-400 ml-1">可動用現金 (緊急預備金)</label>
+                        <input type="number" id="cash" oninput="handleUpdate()" class="w-full bg-slate-50/50 p-3 rounded-2xl border border-slate-200 outline-none focus:ring-2 focus:ring-blue-500 font-bold text-sm transition-all">
                     </div>
 
                     <div class="space-y-1">
-                        <label class="text-[11px] font-bold text-slate-400">每月債務還款 (房貸/信貸)</label>
-                        <input type="number" id="debtPayment" oninput="handleUpdate()" class="w-full bg-slate-50 p-2.5 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-blue-500 font-bold text-sm">
+                        <label class="text-[11px] font-bold text-slate-400 ml-1">每月債務還款 (房貸/信貸)</label>
+                        <input type="number" id="debtPayment" oninput="handleUpdate()" class="w-full bg-slate-50/50 p-3 rounded-2xl border border-slate-200 outline-none focus:ring-2 focus:ring-blue-500 font-bold text-sm transition-all">
                     </div>
 
                     <div class="grid grid-cols-2 gap-4">
                         <div class="space-y-1">
-                            <label class="text-[11px] font-bold text-slate-400">目前退休資產</label>
-                            <input type="number" id="retireCurrent" oninput="handleUpdate()" class="w-full bg-slate-50 p-2.5 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-blue-500 font-bold text-sm">
+                            <label class="text-[11px] font-bold text-slate-400 ml-1">目前退休資產</label>
+                            <input type="number" id="retireCurrent" oninput="handleUpdate()" class="w-full bg-slate-50/50 p-3 rounded-2xl border border-slate-200 outline-none focus:ring-2 focus:ring-blue-500 font-bold text-sm transition-all">
                         </div>
                         <div class="space-y-1">
-                            <label class="text-[11px] font-bold text-slate-400">退休目標總額</label>
-                            <input type="number" id="retireTarget" oninput="handleUpdate()" class="w-full bg-slate-50 p-2.5 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-blue-500 font-bold text-sm">
+                            <label class="text-[11px] font-bold text-slate-400 ml-1">退休目標總額</label>
+                            <input type="number" id="retireTarget" oninput="handleUpdate()" class="w-full bg-slate-50/50 p-3 rounded-2xl border border-slate-200 outline-none focus:ring-2 focus:ring-blue-500 font-bold text-sm transition-all">
                         </div>
                     </div>
 
                     <div class="pt-4 space-y-4 border-t border-slate-100">
                         <div class="flex justify-between items-center mb-2">
                             <label class="text-[11px] font-bold text-slate-400 uppercase tracking-widest">風險保障完整度 (15%)</label>
-                            <span id="insCountLabel" class="text-xs font-black text-blue-600 bg-blue-50 px-2 py-0.5 rounded">0 / 4</span>
+                            <span id="insCountLabel" class="text-[10px] font-black text-blue-600 bg-blue-50 px-2 py-1 rounded-lg">0 / 4</span>
                         </div>
                         <div class="grid grid-cols-2 gap-3">
-                            <label class="flex items-center gap-2 p-3 bg-slate-50 rounded-xl border border-slate-100 cursor-pointer hover:bg-slate-100 transition-colors">
-                                <input type="checkbox" id="insLife" onchange="handleUpdate()" class="w-4 h-4 rounded text-blue-600 checkbox-custom">
-                                <span class="text-xs font-medium text-slate-600">壽險保障</span>
+                            <label class="flex items-center gap-2 p-3 bg-slate-50 rounded-xl border border-slate-100 cursor-pointer hover:bg-white hover:shadow-md transition-all group">
+                                <input type="checkbox" id="insLife" onchange="handleUpdate()" class="w-4 h-4 rounded-md text-blue-600">
+                                <span class="text-xs font-bold text-slate-600 group-hover:text-blue-600">壽險保障</span>
                             </label>
-                            <label class="flex items-center gap-2 p-3 bg-slate-50 rounded-xl border border-slate-100 cursor-pointer hover:bg-slate-100 transition-colors">
-                                <input type="checkbox" id="insMedical" onchange="handleUpdate()" class="w-4 h-4 rounded text-blue-600 checkbox-custom">
-                                <span class="text-xs font-medium text-slate-600">醫療實支</span>
+                            <label class="flex items-center gap-2 p-3 bg-slate-50 rounded-xl border border-slate-100 cursor-pointer hover:bg-white hover:shadow-md transition-all group">
+                                <input type="checkbox" id="insMedical" onchange="handleUpdate()" class="w-4 h-4 rounded-md text-blue-600">
+                                <span class="text-xs font-bold text-slate-600 group-hover:text-blue-600">醫療實支</span>
                             </label>
-                            <label class="flex items-center gap-2 p-3 bg-slate-50 rounded-xl border border-slate-100 cursor-pointer hover:bg-slate-100 transition-colors">
-                                <input type="checkbox" id="insDisease" onchange="handleUpdate()" class="w-4 h-4 rounded text-blue-600 checkbox-custom">
-                                <span class="text-xs font-medium text-slate-600">重大傷病</span>
+                            <label class="flex items-center gap-2 p-3 bg-slate-50 rounded-xl border border-slate-100 cursor-pointer hover:bg-white hover:shadow-md transition-all group">
+                                <input type="checkbox" id="insDisease" onchange="handleUpdate()" class="w-4 h-4 rounded-md text-blue-600">
+                                <span class="text-xs font-bold text-slate-600 group-hover:text-blue-600">重大傷病</span>
                             </label>
-                            <label class="flex items-center gap-2 p-3 bg-slate-50 rounded-xl border border-slate-100 cursor-pointer hover:bg-slate-100 transition-colors">
-                                <input type="checkbox" id="insAccident" onchange="handleUpdate()" class="w-4 h-4 rounded text-blue-600 checkbox-custom">
-                                <span class="text-xs font-medium text-slate-600">意外失能</span>
+                            <label class="flex items-center gap-2 p-3 bg-slate-50 rounded-xl border border-slate-100 cursor-pointer hover:bg-white hover:shadow-md transition-all group">
+                                <input type="checkbox" id="insAccident" onchange="handleUpdate()" class="w-4 h-4 rounded-md text-blue-600">
+                                <span class="text-xs font-bold text-slate-600 group-hover:text-blue-600">意外失能</span>
                             </label>
                         </div>
                         
-                        <div class="flex items-center gap-3 bg-slate-50 p-3 rounded-xl border border-slate-100">
-                            <input type="checkbox" id="assetConcentrated" onchange="handleUpdate()" class="w-4 h-4 rounded text-blue-600">
-                            <label for="assetConcentrated" class="text-xs font-bold text-slate-600">單一資產是否超過 50% (集中風險)</label>
+                        <div class="flex items-center gap-3 bg-amber-50/50 p-3 rounded-xl border border-amber-100">
+                            <input type="checkbox" id="assetConcentrated" onchange="handleUpdate()" class="w-4 h-4 rounded text-amber-600">
+                            <label for="assetConcentrated" class="text-[11px] font-bold text-amber-700 leading-tight">單一資產是否超過 50% (集中風險)</label>
                         </div>
                     </div>
 
-                    <button onclick="resetAll()" class="w-full py-2 text-[10px] font-bold text-slate-300 hover:text-rose-400 transition-colors uppercase tracking-[0.2em]">重設所有數據</button>
+                    <button onclick="resetAll()" class="w-full py-4 text-[10px] font-bold text-slate-400 hover:text-rose-500 transition-colors uppercase tracking-[0.3em]">重設所有數據</button>
                 </div>
             </div>
         </div>
 
         <div class="lg:col-span-8 space-y-6">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="glass p-8 rounded-3xl card-shadow min-h-[350px] flex flex-col items-center">
-                    <h3 class="text-sm font-black text-slate-400 uppercase tracking-widest mb-6 w-full text-center">五大維度平衡分析</h3>
-                    <div class="w-full h-full flex-grow">
+                <div class="glass p-8 rounded-[2.5rem] card-shadow min-h-[400px] flex flex-col items-center border border-white/50">
+                    <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-8 w-full text-center">五大維度平衡分析</h3>
+                    <div class="w-full h-full flex-grow relative">
                         <canvas id="mainChart"></canvas>
                     </div>
                 </div>
 
-                <div class="glass p-8 rounded-3xl card-shadow flex flex-col">
-                    <h3 class="text-sm font-black text-slate-400 uppercase tracking-widest mb-4 border-b pb-2">AI 診斷行動清單</h3>
-                    <div id="adviceContainer" class="space-y-3 overflow-y-auto max-h-[350px] pr-2 text-sm text-slate-600">
-                    </div>
+                <div class="glass p-8 rounded-[2.5rem] card-shadow flex flex-col border border-white/50">
+                    <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-6 border-b border-slate-100 pb-3 flex items-center gap-2">
+                        <span class="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span>
+                        AI 診斷行動清單
+                    </h3>
+                    <div id="adviceContainer" class="space-y-3 overflow-y-auto max-h-[350px] pr-2 custom-scrollbar">
+                        </div>
                 </div>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div class="glass p-6 rounded-3xl card-shadow border-b-4 border-blue-500">
-                    <p class="text-[10px] font-bold text-slate-400 uppercase">現金流安全月數</p>
-                    <div class="flex items-baseline gap-2 mt-2">
-                        <span id="valCashFlow" class="text-3xl font-black text-slate-800">--</span>
-                        <span class="text-xs font-bold text-slate-400">個月</span>
+                <div class="glass p-7 rounded-[2rem] card-shadow border-b-4 border-blue-500 relative overflow-hidden group">
+                    <div class="absolute -right-4 -top-4 w-16 h-16 bg-blue-50 rounded-full group-hover:scale-150 transition-transform duration-700 opacity-50"></div>
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">現金流安全月數</p>
+                    <div class="flex items-baseline gap-2 mt-3">
+                        <span id="valCashFlow" class="text-4xl font-black text-slate-800 tabular-nums">--</span>
+                        <span class="text-xs font-black text-slate-400">Months</span>
                     </div>
-                    <div class="w-full bg-slate-100 h-1.5 rounded-full mt-4">
-                        <div id="barCashFlow" class="bg-blue-500 h-full rounded-full transition-all duration-700" style="width: 0%"></div>
+                    <div class="w-full bg-slate-100 h-2 rounded-full mt-5 overflow-hidden">
+                        <div id="barCashFlow" class="bg-blue-500 h-full rounded-full transition-all duration-1000 ease-out" style="width: 0%"></div>
                     </div>
                 </div>
 
-                <div class="glass p-6 rounded-3xl card-shadow border-b-4 border-indigo-500">
-                    <p class="text-[10px] font-bold text-slate-400 uppercase">負債收支比 (DTI)</p>
-                    <div class="flex items-baseline gap-2 mt-2">
-                        <span id="valDebtRatio" class="text-3xl font-black text-slate-800">--</span>
-                        <span class="text-xs font-bold text-slate-400">%</span>
+                <div class="glass p-7 rounded-[2rem] card-shadow border-b-4 border-indigo-500 relative overflow-hidden group">
+                    <div class="absolute -right-4 -top-4 w-16 h-16 bg-indigo-50 rounded-full group-hover:scale-150 transition-transform duration-700 opacity-50"></div>
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">負債收支比 (DTI)</p>
+                    <div class="flex items-baseline gap-2 mt-3">
+                        <span id="valDebtRatio" class="text-4xl font-black text-slate-800 tabular-nums">--</span>
+                        <span class="text-xs font-black text-slate-400">%</span>
                     </div>
-                    <p id="statusDebt" class="text-[10px] font-bold mt-4 px-2 py-1 rounded-md inline-block">計算中...</p>
+                    <p id="statusDebt" class="text-[10px] font-black mt-5 px-3 py-1.5 rounded-xl inline-block shadow-sm">計算中...</p>
                 </div>
 
-                <div class="glass p-6 rounded-3xl card-shadow border-b-4 border-emerald-500">
-                    <p class="text-[10px] font-bold text-slate-400 uppercase">退休達成率</p>
-                    <div class="flex items-baseline gap-2 mt-2">
-                        <span id="valRetireRate" class="text-3xl font-black text-slate-800">--</span>
-                        <span class="text-xs font-bold text-slate-400">%</span>
+                <div class="glass p-7 rounded-[2rem] card-shadow border-b-4 border-emerald-500 relative overflow-hidden group">
+                    <div class="absolute -right-4 -top-4 w-16 h-16 bg-emerald-50 rounded-full group-hover:scale-150 transition-transform duration-700 opacity-50"></div>
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">退休達成率</p>
+                    <div class="flex items-baseline gap-2 mt-3">
+                        <span id="valRetireRate" class="text-4xl font-black text-slate-800 tabular-nums">--</span>
+                        <span class="text-xs font-black text-slate-400">%</span>
                     </div>
-                    <div class="w-full bg-slate-100 h-1.5 rounded-full mt-4">
-                        <div id="barRetire" class="bg-emerald-500 h-full rounded-full transition-all duration-700" style="width: 0%"></div>
+                    <div class="w-full bg-slate-100 h-2 rounded-full mt-5 overflow-hidden">
+                        <div id="barRetire" class="bg-emerald-500 h-full rounded-full transition-all duration-1000 ease-out" style="width: 0%"></div>
                     </div>
                 </div>
             </div>
@@ -179,7 +208,7 @@
 
     <script>
         let myChart;
-        const STORAGE_KEY = 'pro_finance_v2';
+        const STORAGE_KEY = 'pro_finance_v2_pwa';
 
         function initChart() {
             const ctx = document.getElementById('mainChart').getContext('2d');
@@ -189,24 +218,30 @@
                     labels: ['現金安全', '配置平衡', '負債健康', '保障完整', '退休準備'],
                     datasets: [{
                         data: [0, 0, 0, 0, 0],
-                        backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                        backgroundColor: 'rgba(37, 99, 235, 0.15)',
                         borderColor: '#2563eb',
-                        borderWidth: 3,
+                        borderWidth: 4,
                         pointBackgroundColor: '#fff',
-                        pointRadius: 4
+                        pointBorderColor: '#2563eb',
+                        pointBorderWidth: 2,
+                        pointRadius: 5,
+                        pointHoverRadius: 7
                     }]
                 },
                 options: {
                     scales: {
                         r: {
-                            beginAtZero: true, max: 25,
-                            ticks: { display: false },
-                            grid: { color: 'rgba(0,0,0,0.05)' },
-                            pointLabels: { font: { size: 11, weight: '700' } }
+                            beginAtZero: true, 
+                            max: 25,
+                            ticks: { display: false, stepSize: 5 },
+                            grid: { color: 'rgba(0,0,0,0.04)', circular: true },
+                            angleLines: { color: 'rgba(0,0,0,0.04)' },
+                            pointLabels: { font: { size: 12, weight: '900' }, color: '#64748b' }
                         }
                     },
                     plugins: { legend: { display: false } },
-                    maintainAspectRatio: false
+                    maintainAspectRatio: false,
+                    animation: { duration: 800, easing: 'easeOutQuart' }
                 }
             });
         }
@@ -218,7 +253,7 @@
                 disease: document.getElementById('insDisease').checked,
                 accident: document.getElementById('insAccident').checked
             };
-            const insScore = Object.values(insData).filter(v => v).length;
+            const insScoreCount = Object.values(insData).filter(v => v).length;
 
             const d = {
                 income: parseFloat(document.getElementById('income').value) || 0,
@@ -235,36 +270,41 @@
             const debtRatio = d.income > 0 ? (d.debtPayment / d.income) * 100 : 0;
             const retireRate = (d.retireCurrent / d.retireTarget) * 100;
 
+            // 五大維度計分邏輯
             const s1 = cashFlowMonths >= 12 ? 25 : cashFlowMonths >= 6 ? 18 : cashFlowMonths >= 3 ? 10 : 5;
             const s2 = d.concentrated ? 8 : 20;
             const s3 = debtRatio < 30 ? 20 : debtRatio <= 50 ? 12 : 5;
-            const s4 = (insScore / 4) * 15;
+            const s4 = (insScoreCount / 4) * 15;
             const s5 = retireRate >= 80 ? 20 : retireRate >= 50 ? 12 : 6;
 
             const total = Math.round(s1 + s2 + s3 + s4 + s5);
 
+            // 更新介面數值
             document.getElementById('totalScore').innerText = total;
-            document.getElementById('insCountLabel').innerText = insScore + ' / 4';
+            document.getElementById('insCountLabel').innerText = insScoreCount + ' / 4';
             document.getElementById('valCashFlow').innerText = cashFlowMonths.toFixed(1);
             document.getElementById('valDebtRatio').innerText = debtRatio.toFixed(0);
             document.getElementById('valRetireRate').innerText = Math.min(100, retireRate).toFixed(0);
 
+            // 更新進度條
             document.getElementById('barCashFlow').style.width = Math.min(100, (cashFlowMonths / 12) * 100) + '%';
             document.getElementById('barRetire').style.width = Math.min(100, retireRate) + '%';
             
+            // 債務標籤顏色
             const sDebt = document.getElementById('statusDebt');
             if(debtRatio < 30) {
-                sDebt.innerText = '● 債務極佳'; sDebt.className = 'text-[10px] font-bold mt-4 px-2 py-1 rounded-md inline-block bg-emerald-50 text-emerald-600';
+                sDebt.innerText = '● 財務穩健'; sDebt.className = 'text-[10px] font-black mt-5 px-3 py-1.5 rounded-xl inline-block bg-emerald-50 text-emerald-600';
             } else if(debtRatio <= 50) {
-                sDebt.innerText = '● 警戒水位'; sDebt.className = 'text-[10px] font-bold mt-4 px-2 py-1 rounded-md inline-block bg-amber-50 text-amber-600';
+                sDebt.innerText = '● 警戒水位'; sDebt.className = 'text-[10px] font-black mt-5 px-3 py-1.5 rounded-xl inline-block bg-amber-50 text-amber-600';
             } else {
-                sDebt.innerText = '● 風險過高'; sDebt.className = 'text-[10px] font-bold mt-4 px-2 py-1 rounded-md inline-block bg-rose-50 text-rose-600';
+                sDebt.innerText = '● 風險過高'; sDebt.className = 'text-[10px] font-black mt-5 px-3 py-1.5 rounded-xl inline-block bg-rose-50 text-rose-600';
             }
 
+            // 總分評價標籤
             const rank = document.getElementById('rankBadge');
-            if(total >= 80) { rank.innerText = '穩定成長型'; rank.className = 'px-4 py-2 rounded-full bg-emerald-500 text-white text-xs font-bold'; }
-            else if(total >= 60) { rank.innerText = '需優化型'; rank.className = 'px-4 py-2 rounded-full bg-amber-500 text-white text-xs font-bold'; }
-            else { rank.innerText = '高風險型'; rank.className = 'px-4 py-2 rounded-full bg-rose-500 text-white text-xs font-bold'; }
+            if(total >= 80) { rank.innerText = '尊榮穩定型'; rank.className = 'px-4 py-2 rounded-full bg-emerald-500 text-white text-xs font-bold shadow-lg shadow-emerald-200'; }
+            else if(total >= 60) { rank.innerText = '需優化型'; rank.className = 'px-4 py-2 rounded-full bg-amber-500 text-white text-xs font-bold shadow-lg shadow-amber-200'; }
+            else { rank.innerText = '高風險型'; rank.className = 'px-4 py-2 rounded-full bg-rose-500 text-white text-xs font-bold shadow-lg shadow-rose-200'; }
 
             generateAdvice(s1, s2, s3, s4, s5, cashFlowMonths, debtRatio, d, insData);
 
@@ -279,21 +319,20 @@
             container.innerHTML = '';
             let advices = [];
 
-            if(!ins.life) advices.push(`🛡️ <b>遺漏壽險保障</b>：建議補足 10 倍年支出的保額。`);
-            if(!ins.medical) advices.push(`🏥 <b>醫療實支缺口</b>：建議優先轉移高額自費風險。`);
-            if(!ins.disease) advices.push(`🎗️ <b>重大傷病風險</b>：建議配置一次金型保障以應對長期開銷。`);
-            if(!ins.accident) advices.push(`🩹 <b>失能風險警示</b>：建議補強意外險與失能保障。`);
-
-            if(s1 <= 10) advices.push(`🔴 <b>預備金不足</b>：建議優先存下 $${(d.expenses * 6 - d.cash).toLocaleString()} 元達到安全水位。`);
-            if(dr > 40) advices.push(`🟠 <b>負債壓力大</b>：負債比達 ${dr.toFixed(0)}%，已壓縮生活品質。`);
-            if(d.concentrated) advices.push(`📉 <b>資產分散不足</b>：資產過度集中，建議重新配置。`);
+            if(!ins.life) advices.push(`🛡️ <b>補強壽險</b>：目前責任缺口較大，建議增加保額。`);
+            if(!ins.medical) advices.push(`🏥 <b>醫療缺口</b>：實支實付可分散大額自費風險。`);
+            if(!ins.disease) advices.push(`🎗️ <b>傷病規劃</b>：一次金型保障能支撐長期療養。`);
+            
+            if(cf < 6) advices.push(`🔴 <b>預備金預警</b>：建議再存入 $${(d.expenses * 6 - d.cash).toLocaleString()} 以對應半年支出。`);
+            if(dr > 40) advices.push(`🟠 <b>債務沉重</b>：DTI 已達 ${dr.toFixed(0)}%，建議評估轉貸或減債。`);
+            if(d.concentrated) advices.push(`📉 <b>配置風險</b>：過於集中單一資產，缺乏抗震力。`);
 
             if(advices.length === 0) {
-                container.innerHTML = '<div class="text-emerald-500 font-bold italic p-4 text-center">✨ 目前財務狀況極其穩健！</div>';
+                container.innerHTML = '<div class="text-emerald-500 font-bold p-10 text-center opacity-60">✨ 財務體質完美！繼續保持。</div>';
             } else {
                 advices.forEach(txt => {
                     const div = document.createElement('div');
-                    div.className = 'p-3 bg-slate-50 border-l-4 border-blue-400 rounded-r-xl leading-relaxed text-[13px] text-slate-700 shadow-sm';
+                    div.className = 'advice-item p-4 bg-white border border-slate-100 rounded-2xl leading-relaxed text-[13px] text-slate-700 shadow-sm border-l-4 border-l-blue-500';
                     div.innerHTML = txt;
                     container.appendChild(div);
                 });
@@ -311,7 +350,6 @@
                 document.getElementById('retireCurrent').value = d.retireCurrent;
                 document.getElementById('retireTarget').value = d.retireTarget;
                 document.getElementById('assetConcentrated').checked = d.concentrated;
-                
                 if(d.insData) {
                     document.getElementById('insLife').checked = d.insData.life;
                     document.getElementById('insMedical').checked = d.insData.medical;
@@ -319,19 +357,18 @@
                     document.getElementById('insAccident').checked = d.insData.accident;
                 }
             } else {
-                document.getElementById('income').value = 80000;
-                document.getElementById('expenses').value = 50000;
-                document.getElementById('cash').value = 150000;
-                document.getElementById('debtPayment').value = 15000;
-                document.getElementById('retireCurrent').value = 500000;
-                document.getElementById('retireTarget').value = 5000000;
-                document.getElementById('insLife').checked = true;
-                document.getElementById('insMedical').checked = true;
+                // 預設示範數據
+                document.getElementById('income').value = 100000;
+                document.getElementById('expenses').value = 60000;
+                document.getElementById('cash').value = 200000;
+                document.getElementById('debtPayment').value = 25000;
+                document.getElementById('retireCurrent').value = 800000;
+                document.getElementById('retireTarget').value = 6000000;
             }
         }
 
         function resetAll() {
-            if(confirm('確定要清空並重置所有資料嗎？')) {
+            if(confirm('確定要清除所有財務記錄嗎？這將無法復原。')) {
                 localStorage.removeItem(STORAGE_KEY);
                 location.reload();
             }
